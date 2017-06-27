@@ -1,0 +1,54 @@
+<br>
+<p>In practice, using Thor involves three simple steps. These are as follows:</p>
+<ol>
+   <li>Authentication, where you let Thor know who you are. This prevents experiments and users from becoming conflicted.</li>
+   <li>Creation, where you imperatively define your optimization problem.</li>
+   <li>Optimization, where you get parameter recommendations from Thor, evaluate them on your personal machine, and let Thor know how you did.</li>
+</ol>
+<p>This example will walk through a basic test function called the Franke function. This two-dimensional problem will illustrate how Thor will attempt to find the maximum of a black-box function.</p>
+<br>
+<h4>Authenticate</h4>
+<p>As a registered user, your API key is: <code>{{ current_user.auth_token }}</code>. To authenticate with the Thor server in Python, execute:</p>
+<pre><code class="language-python">from thor_client import ThorClient
+
+# Authentication token.
+auth_token = "{{ current_user.auth_token }}"
+
+# Authenticate with Thor.
+tc = ThorClient(auth_token)</code></pre>
+<br>
+<h4>Experiment Creation</h4>
+<p>Once you are authenticated with the Thor server, you will need to create a machine learning experiment. Using Thor's technology, experiments are defined imperatively by specifying a name as well as a set of parameters to optimize. For the Franke function, there are two parameters requiring optimization, denoted <var>x</var> and <var>y</var>, both of which take values in the unit interval. Programmatically, the Franke function can be written as follows (make sure that this is included in your test script):
+  <pre><code class="language-python">import numpy as np
+
+def franke(params):
+    params = params.ravel()
+    x = params[0]
+    y = params[1]
+    T1 = 0.75 * np.exp(-(9. * x - 2.)**2 / 4 - (9. * y - 2.)**2 / 4.)
+    T2 = 0.75 * np.exp(-(9. * x + 1.)**2 / 49 - (9. * y + 1.) / 10.)
+    T3 = 0.5 * np.exp(-(9. * x - 7.)**2 / 4 - (9. * y - 3.)**2 / 4.)
+    T4 = -0.2 * np.exp(-(9. * x - 4.)**2 - (9. * y - 7.)**2)
+    return T1 + T2 + T3 + T4</code></pre>
+
+Creating an experiment with Thor is easy:
+<pre><code class="language-python"># Create experiment.
+name = "Franke Function"
+dims = [
+    {"name": "x", "dim_type": "linear", "low": 0., "high": 1.},
+    {"name": "y", "dim_type": "linear", "low": 0., "high": 1.}
+]
+exp = tc.create_experiment(name, dims, "expected_improvement")</code></pre>
+<p>The last argument to the <code>create_experiment</code> function specifies that the expected improvement acquisition function should be used.</p>
+<br>
+<h4>Bayesian Optimization</h4>
+The last step is the optimization loop. In this step, you will receive hyperparameter recommendations from Thor, evaluate them on your local machine, and then transmit the performance of that parameter configuration back to Thor. On the basis of the observed data (that is, hyperparameter and performance pairs), the underlying Bayesian optimization technology will generate new parameter configurations. When using Thor, the main optimization loop may resemble,
+<pre><code class="language-python"># Main optimization loop.
+for i in range(30):
+    # Request a recommendation of hyperparameters from Thor.
+    rec = exp.create_recommendation()
+    # Extract the recommendation and evaluate it on the unknown objective function.
+    x = rec.config
+    val = franke(np.array([x["x"], x["y"]]))
+    # Report the performance of the configuration back to Thor.
+    rec.submit_recommendation(val)</code></pre>

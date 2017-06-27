@@ -1,0 +1,10 @@
+.thor-del-exp-btn {
+    padding-top: 16px;
+}
+.thor-del-pend-btn {
+    padding-top: 56px;
+}
+.disabled {
+   pointer-events: none;
+   cursor: default;
+}

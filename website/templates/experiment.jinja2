@@ -1,0 +1,47 @@
+{% extends "base.jinja2" %}
+
+{% block styles %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for("static", filename="css/experiment.css") }}">
+  {% if css_resources is defined %}
+    {{ css_resources|indent(4)|safe }}
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {% if js_resources is defined %}
+    {{ js_resources|indent(4)|safe }}
+  {% endif %}
+  {% if plot_script is defined %}
+    {{ plot_script|indent(4)|safe }}
+  {% endif %}
+{% endblock %}
+
+{% block main_content %}
+  <div class="row">
+    <div class="col-md-9">
+      <h3>{{ experiment.name }}</h3>
+    </div>
+    <div class="col-md-1 thor-del-exp-btn">
+      <form method="post" action="{{ url_for("api.delete_experiment", experiment_id=experiment.id) }}">
+        <button class="btn btn-danger" type="submit">Delete Experiment</button>
+      </form>
+    </div>
+  </div>
+  <hr class="featurette-divider">
+
+  <ul class="nav nav-tabs">
+    <li {% if tab == "overview" %}class="active disabled"{% endif %}><a href="{{ url_for("experiment.overview_page", name=experiment.name) }}">Overview</a></li>
+    <li {% if tab == "analysis" %}class="active disabled"{% endif %}><a href="{{ url_for("experiment.analysis_page", name=experiment.name) }}">Analysis</a></li>
+    <li {% if tab == "history" %}class="active disabled"{% endif %}><a href="{{ url_for("experiment.history_page", name=experiment.name) }}">History</a></li>
+  </ul>
+
+  {% if tab == "overview" %}
+    {% include "experiment/overview.jinja2" %}
+  {% elif tab == "analysis" %}
+    {% include "experiment/analysis.jinja2" %}
+  {% elif tab == "history" %}
+    {% include "experiment/history.jinja2" %}
+  {% endif %}
+{% endblock %}

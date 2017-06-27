@@ -1,0 +1,38 @@
+
+
+<br>
+<p>Thor supports client interfaces for Python, MATLAB, and R. This page details the usage of these three client-side APIs as well as how to properly install them on your system.</p>
+<p>
+   For all of these clients, do not forget to obtain your unique API key for the Thor Bayesian optimization infrastructure by visiting the <a href="{{ url_for("api.page", tab="introduction") }}">API homepage</a>.
+</p>
+<br>
+<h4>Python Client</h4>
+<p>
+   To install the Python client to Thor, please follow these instructions.
+</p>
+<ol>
+   <li>Download the compressed Python client source code <a href="{{ url_for("static", filename="clients/Thor-Python-Client-master.zip") }}">here</a>.</li>
+   <li>Unzip the Python client source code.</li>
+   <li>Change directory into <code>Thor-Python-Client-master</code> and execute the command <code>python setup.py install</code>.</li>
+</ol>
+<br>
+<h4>MATLAB Client</h4>
+<p>
+   To install the MATLAB client to Thor, please follow these instructions.
+</p>
+<ol>
+   <li>Download the compressed MATLAB client source code <a href="{{ url_for("static", filename="clients/Thor-MATLAB-Client-master.zip") }}">here</a>.</li>
+   <li>Unzip the MATLAB client source code.</li>
+   <li>From the MATLAB console, execute the command <code>addpath(genpath('path/to/Thor-MATLAB-Client-master/thor_client/'));</code>.</li>
+</ol>
+<br>
+<h4>R Client</h4>
+<p>
+   To install the R client to Thor, please follow these instructions.
+</p>
+<ol>
+  <li>Download the compressed R client source code <a href="{{ url_for("static", filename="clients/Thor-R-Client-master.zip") }}">here</a>.</li>
+  <li>Unzip the R client source code.</li>
+  <li>Import the R client by sourcing the client files by executing <code>source("path/to/Thor-R-Client-master/thor_client/thor.client.R")</code> in your R script.</li>
+</ol>
+

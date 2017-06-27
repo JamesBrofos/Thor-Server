@@ -1,0 +1,30 @@
+<div class="row">
+<div class="col-md-1 col-md-offset-9 thor-exp-btn">
+  <form method="get" action="{{ url_for("experiment.download_history", experiment_id=experiment.id) }}">
+    <button class="btn btn-info" type="submit">Download History</button>
+  </form>
+</div>
+</div>
+<br>
+<table class="table">
+  <thead>
+    <tr>
+      {% for dim in experiment.dimensions.all() %}
+        <th>{{ dim.name }}</th>
+      {% endfor %}
+      <th>Target</th>
+      <th>Created</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for obs in experiment.observations.order_by("date")|reverse %}
+      <tr>
+        {% for dim in experiment.dimensions.all() %}
+          <td>{{ obs.config[dim.name]|round(5) }}</td>
+        {% endfor %}
+        <td>{% if obs.target is not none %}{{ obs.target|round(5) }}{% endif %}</td>
+        <td>{{ obs.date.strftime('%Y-%m-%d at %H:%M') }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>

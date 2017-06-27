@@ -1,0 +1,32 @@
+<br>
+<div class="row">
+  <div class="col-md-9">
+    {% if experiment.observations.filter_by(pending=False).count() > 0 %}
+      <p><b>Last observation received:</b> {{ (experiment.observations.filter_by(pending=False)|sort(attribute="date")|last).date.strftime('%Y-%m-%d at %H:%M') }}</p>
+    {% endif %}
+    <p><b>Number of observations:</b> {{ experiment.observations.filter_by(pending=False).count() }}</p>
+    <p><b>Pending observations:</b> {{ experiment.observations.filter_by(pending=True).count() }}</p>
+  </div>
+  {% if experiment.observations.filter_by(pending=True).count() > 0 %}
+    <div class="col-md-1 thor-del-pend-btn">
+      <form method="post" action="{{ url_for("experiment.delete_pending", experiment_id=experiment.id) }}">
+        <button class="btn btn-info" type="submit">Delete Pending</button>
+      </form>
+    </div>
+  {% endif %}
+</div>
+<br>
+{{ plot_div|indent(4)|safe }}
+<p>
+<form method="get" class="form" >
+   <div class="form-group">
+      <label for="variable">Variable:</label>
+      <select class="form-control" name="variable" onchange="this.form.submit()">
+      {% for dim in experiment.dimensions.all() %}
+      <option {% if selected_dim == loop.index0 %}selected{% endif %} value={{ loop.index0 }}>{{ dim.name }}</option>
+      {% endfor %}
+      </select>
+   </div>
+</form>
+</p>
+
