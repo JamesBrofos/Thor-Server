@@ -7,3 +7,6 @@ all:
 lan:
 	echo $(ip_addr)
 	gunicorn -t $(timeout) -w 4 -b $(ip_addr):5000 app:app
+
+dev:
+	gunicorn -t $(timeout) -w 2 -b 127.0.0.1:5000 --reload --log-level DEBUG app:app

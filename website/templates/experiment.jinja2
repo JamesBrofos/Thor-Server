@@ -32,9 +32,15 @@
   <hr class="featurette-divider">
 
   <ul class="nav nav-tabs">
-    <li {% if tab == "overview" %}class="active disabled"{% endif %}><a href="{{ url_for("experiment.overview_page", name=experiment.name) }}">Overview</a></li>
-    <li {% if tab == "analysis" %}class="active disabled"{% endif %}><a href="{{ url_for("experiment.analysis_page", name=experiment.name) }}">Analysis</a></li>
-    <li {% if tab == "history" %}class="active disabled"{% endif %}><a href="{{ url_for("experiment.history_page", name=experiment.name) }}">History</a></li>
+    <li {% if tab == "overview" %}class="active disabled"{% endif %}>
+      <a href="{{ url_for("experiment.overview_page", experiment_id=experiment.id) }}">Overview</a>
+    </li>
+    <li {% if tab == "analysis" %}class="active disabled"{% endif %}>
+      <a href="{{ url_for("experiment.analysis_page", experiment_id=experiment.id) }}">Analysis</a>
+    </li>
+    <li {% if tab == "history" %}class="active disabled"{% endif %}>
+      <a href="{{ url_for("experiment.history_page", experiment_id=experiment.id) }}">History</a>
+    </li>
   </ul>
 
   {% if tab == "overview" %}

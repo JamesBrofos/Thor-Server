@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import json
 from flask import (
     Blueprint,
     render_template,
@@ -17,7 +16,7 @@ from bokeh.plotting import figure
 from bokeh.resources import INLINE
 from bokeh.util.string import encode_utf8
 # Thor Server imports.
-from ..models import Experiment, Dimension, Observation
+from ..models import Experiment, Observation
 from ..utils import decode_recommendation
 from .. import db
 
@@ -41,7 +40,9 @@ def delete_pending(experiment_id):
         db.session.delete(obs)
     db.session.commit()
 
-    return redirect(url_for("experiment.analysis_page", name=exp.name))
+    return redirect(url_for("experiment.analysis_page",
+                            experiment_id=experiment_id))
+
 
 @experiment.route("/experiment/<int:experiment_id>/history/download/")
 @login_required
@@ -62,15 +63,15 @@ def download_history(experiment_id):
     resp.headers["Content-Disposition"] = "attachment; filename=export.csv"
     resp.headers["Content-Type"] = "text/csv"
 
-
     return resp
 
-@experiment.route("/experiment/<string:name>/history/")
+
+@experiment.route("/experiment/<int:experiment_id>/history/")
 @login_required
-def history_page(name):
+def history_page(experiment_id):
     # Query for the corresponding experiment.
     experiment = Experiment.query.filter_by(
-        name=name, user_id=current_user.id
+        id=experiment_id, user_id=current_user.id
     ).first_or_404()
 
     return render_template(
@@ -79,12 +80,13 @@ def history_page(name):
             experiment=experiment
         )
 
-@experiment.route("/experiment/<string:name>/analysis/")
+
+@experiment.route("/experiment/<int:experiment_id>/analysis/")
 @login_required
-def analysis_page(name):
+def analysis_page(experiment_id):
     # Query for the corresponding experiment.
     experiment = Experiment.query.filter_by(
-        name=name, user_id=current_user.id
+        id=experiment_id, user_id=current_user.id
     ).first()
     # Grab the inputs arguments from the URL.
     args = request.args
@@ -130,12 +132,13 @@ def analysis_page(name):
     else:
         abort(404)
 
-@experiment.route("/experiment/<string:name>/")
+
+@experiment.route("/experiment/<int:experiment_id>/")
 @login_required
-def overview_page(name):
+def overview_page(experiment_id):
     # Query for the corresponding experiment.
     experiment = Experiment.query.filter_by(
-        name=name, user_id=current_user.id
+        id=experiment_id, user_id=current_user.id
     ).first_or_404()
 
     dims = experiment.dimensions.all()
@@ -174,7 +177,7 @@ def overview_page(name):
         )
     )
 
+
 @experiment.errorhandler(404)
 def page_not_found(e):
     return render_template("404.jinja2"), status.HTTP_404_NOT_FOUND
-

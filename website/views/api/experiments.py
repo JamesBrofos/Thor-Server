@@ -3,7 +3,7 @@ from flask import Blueprint
 from flask import request, jsonify
 from flask_api import status
 from ...utils import require_apikey
-from ...models import Experiment, Dimension, AcquisitionFunction, Observation
+from ...models import Experiment, AcquisitionFunction, Observation
 from ... import db
 
 
@@ -67,6 +67,7 @@ def create_experiment(user):
 
         return jsonify(exp.to_dict())
 
+
 @experiments.route("/api/experiment_for_name/", methods=["POST"])
 @require_apikey
 def experiment_for_name(user):
@@ -80,6 +81,7 @@ def experiment_for_name(user):
         err = {"error": "Experiment named '{}' does not exist.".format(name)}
         print(err)
         return (jsonify(err), status.HTTP_400_BAD_REQUEST)
+
 
 @experiments.route("/api/best_configuration/", methods=["POST"])
 @require_apikey
