@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import json
 from flask import (
     Blueprint,
     render_template,
@@ -17,7 +16,7 @@ from bokeh.plotting import figure
 from bokeh.resources import INLINE
 from bokeh.util.string import encode_utf8
 # Thor Server imports.
-from ..models import Experiment, Dimension, Observation
+from ..models import Experiment, Observation
 from ..utils import decode_recommendation
 from .. import db
 
@@ -53,17 +52,21 @@ def download_history(experiment_id):
     # Parse the observations into a pandas dataframe.
     dims = experiment.dimensions.all()
     # obs = experiment.observations.filter(Observation.pending==False).all()
-    obs = experiment.observations.all()
+    obs = experiment.observations.order_by("id").all()
     X, y = decode_recommendation(obs, dims)
     D = pd.DataFrame(X, columns=[d.name for d in dims])
     D["target"] = y
+    D["obs_id"] = [o.id for o in obs]
+    D["date"] = [pd.datetime.strftime(o.date, '%Y-%m-%d %H:%M:%S')
+                 for o in obs]
+    D.set_index('obs_id', inplace=True)
     # Make a comma-separated variables file.
     resp = make_response(D.to_csv())
     resp.headers["Content-Disposition"] = "attachment; filename=export.csv"
     resp.headers["Content-Type"] = "text/csv"
 
-
     return resp
+
 
 @experiment.route("/experiment/<string:name>/history/")
 @login_required
@@ -177,4 +180,3 @@ def overview_page(name):
 @experiment.errorhandler(404)
 def page_not_found(e):
     return render_template("404.jinja2"), status.HTTP_404_NOT_FOUND
-
