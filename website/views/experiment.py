@@ -54,10 +54,14 @@ def download_history(experiment_id):
     # Parse the observations into a pandas dataframe.
     dims = experiment.dimensions.all()
     # obs = experiment.observations.filter(Observation.pending==False).all()
-    obs = experiment.observations.all()
+    obs = experiment.observations.order_by("id").all()
     X, y = decode_recommendation(obs, dims)
     D = pd.DataFrame(X, columns=[d.name for d in dims])
     D["target"] = y
+    D["obs_id"] = [o.id for o in obs]
+    D["date"] = [pd.datetime.strftime(o.date, '%Y-%m-%d %H:%M:%S')
+                 for o in obs]
+    D.set_index('obs_id', inplace=True)
     # Make a comma-separated variables file.
     resp = make_response(D.to_csv())
     resp.headers["Content-Disposition"] = "attachment; filename=export.csv"
