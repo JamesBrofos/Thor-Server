@@ -1,0 +1,69 @@
+<div class="container">
+  <div class="row">
+    {% if experiment.is_published %}
+    <div class="col-md-8">
+      <h4>Unpublish your experiment</h4>
+      <div class="col-md-5">
+        <p>
+        This experiment is <b>published</b> to other users.
+        Click the button to hide this experiment.
+        </p>
+      </div>
+      <div class="col-md-3 thor-exp-btn">
+        <form method="post"
+            action="{{ url_for("api.unpublish_experiment", experiment_id=experiment.id) }}"
+            >
+          <button class="btn btn-primary active" type="submit" aria-pressed="true">
+              Unpublish
+          </button>
+        </form>
+      </div>
+    </div>
+    <div class="col-md-8">
+      <p>
+      Share this URL with other users:
+        <a href="{{ url_for("experiment.overview_page",
+                            experiment_id=experiment.id) }}">
+        {{ url_for("experiment.overview_page", experiment_id=experiment.id,
+                   _external=True) }}
+        </a>
+      </p>
+    </div>
+    {% else %}
+    <div class="col-md-8">
+      <h4>Publish your experiment</h4>
+      <div class="col-md-5">
+        <p>
+        By default, all your Thor experiments are visible only to you.
+        Click the button to publish this experiment.
+        </p>
+      </div>
+      <div class="col-md-5 thor-exp-btn">
+        <form method="post"
+            action="{{ url_for("api.publish_experiment", experiment_id=experiment.id) }}"
+            >
+            <button class="btn btn-primary" type="submit" aria-pressed="false">
+                Publish
+            </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="row">
+    <div class="col-md-8">
+      <h4>Delete your experiment</h4>
+    <div class="col-md-5">
+      <p>
+      Click to delete this experiment and all of its observations.
+      </p>
+    </div>
+    <div class="col-md-3 thor-exp-btn">
+      <form method="post" action="{{ url_for("api.delete_experiment", experiment_id=experiment.id) }}">
+        <button class="btn btn-danger" type="submit"
+            onclick="if (!confirm('Are you sure?')) return false;">Delete</button>
+      </form>
+    </div>
+  </div>
+</div>

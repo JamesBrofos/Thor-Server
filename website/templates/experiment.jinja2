@@ -22,11 +22,9 @@
   <div class="row">
     <div class="col-md-9">
       <h3>{{ experiment.name }}</h3>
-    </div>
-    <div class="col-md-1 thor-del-exp-btn">
-      <form method="post" action="{{ url_for("api.delete_experiment", experiment_id=experiment.id) }}">
-        <button class="btn btn-danger" type="submit">Delete Experiment</button>
-      </form>
+      {% if experiment.user_id != current_user.id %}
+      <h4>{{ experiment.users.username }}</h4>
+      {% endif %}
     </div>
   </div>
   <hr class="featurette-divider">
@@ -41,6 +39,11 @@
     <li {% if tab == "history" %}class="active disabled"{% endif %}>
       <a href="{{ url_for("experiment.history_page", experiment_id=experiment.id) }}">History</a>
     </li>
+    {% if current_user.id == experiment.user_id %}
+    <li {% if tab == "admin" %}class="active disabled"{% endif %}>
+      <a href="{{ url_for("experiment.admin_page", experiment_id=experiment.id) }}">Admin</a>
+    </li>
+    {% endif %}
   </ul>
 
   {% if tab == "overview" %}
@@ -49,5 +52,7 @@
     {% include "experiment/analysis.jinja2" %}
   {% elif tab == "history" %}
     {% include "experiment/history.jinja2" %}
+  {% elif tab == "admin" and current_user.id == experiment.user_id %}
+    {% include "experiment/admin.jinja2" %}
   {% endif %}
 {% endblock %}

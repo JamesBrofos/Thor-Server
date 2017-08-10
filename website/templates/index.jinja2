@@ -15,7 +15,10 @@
   {% for experiment in experiments.items %}
     <h4><a href="{{ url_for("experiment.overview_page", experiment_id=experiment.id) }}">{{ experiment.name }}</a></h4>
 <p>
-  {{ experiment.date.strftime('%Y-%m-%d') }} | Observations {{ experiment.observations.count() }}{% if experiment.maximal_observation %} | Metric {{ experiment.maximal_observation.target|round(4) }}{% endif %}
+  {{ experiment.date.strftime('%Y-%m-%d') }}
+  | Observations {{ experiment.observations.count() }}{% if experiment.maximal_observation %}
+  | Metric {{ experiment.maximal_observation.target|round(4) }}{% endif %}
+  {% if experiment.is_published %}| <span class="badge badge-info">Published</span>{% endif %}
 </p>
 {% endfor %}
 <br>
