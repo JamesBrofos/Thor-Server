@@ -40,7 +40,9 @@ def delete_pending(experiment_id):
         db.session.delete(obs)
     db.session.commit()
 
-    return redirect(url_for("experiment.analysis_page", name=exp.name))
+    return redirect(url_for("experiment.analysis_page",
+                            experiment_id=experiment_id))
+
 
 @experiment.route("/experiment/<int:experiment_id>/history/download/")
 @login_required
@@ -68,12 +70,12 @@ def download_history(experiment_id):
     return resp
 
 
-@experiment.route("/experiment/<string:name>/history/")
+@experiment.route("/experiment/<int:experiment_id>/history/")
 @login_required
-def history_page(name):
+def history_page(experiment_id):
     # Query for the corresponding experiment.
     experiment = Experiment.query.filter_by(
-        name=name, user_id=current_user.id
+        id=experiment_id, user_id=current_user.id
     ).first_or_404()
 
     return render_template(
@@ -82,12 +84,13 @@ def history_page(name):
             experiment=experiment
         )
 
-@experiment.route("/experiment/<string:name>/analysis/")
+
+@experiment.route("/experiment/<int:experiment_id>/analysis/")
 @login_required
-def analysis_page(name):
+def analysis_page(experiment_id):
     # Query for the corresponding experiment.
     experiment = Experiment.query.filter_by(
-        name=name, user_id=current_user.id
+        id=experiment_id, user_id=current_user.id
     ).first()
     # Grab the inputs arguments from the URL.
     args = request.args
@@ -133,12 +136,13 @@ def analysis_page(name):
     else:
         abort(404)
 
-@experiment.route("/experiment/<string:name>/")
+
+@experiment.route("/experiment/<int:experiment_id>/")
 @login_required
-def overview_page(name):
+def overview_page(experiment_id):
     # Query for the corresponding experiment.
     experiment = Experiment.query.filter_by(
-        name=name, user_id=current_user.id
+        id=experiment_id, user_id=current_user.id
     ).first_or_404()
 
     dims = experiment.dimensions.all()
@@ -176,6 +180,7 @@ def overview_page(name):
             css_resources=css_resources,
         )
     )
+
 
 @experiment.errorhandler(404)
 def page_not_found(e):

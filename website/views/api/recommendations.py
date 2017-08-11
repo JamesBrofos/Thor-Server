@@ -5,7 +5,7 @@ from time import sleep
 from flask import Blueprint, request, jsonify
 from flask_api import status
 from thor.optimization import BayesianOptimization
-from thor.models import GaussianProcess, StudentProcess
+from thor.models import GaussianProcess
 from ...models import Experiment, Observation
 from ... import db
 from ...utils import (
@@ -122,4 +122,3 @@ def pending_recommendations(user):
         }
         print(err)
         return (jsonify(err), status.HTTP_400_BAD_REQUEST)
-

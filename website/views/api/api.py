@@ -4,10 +4,12 @@ from ... import db
 
 api = Blueprint("api", __name__)
 
+
 @api.route("/api/<string:tab>/")
 @login_required
 def page(tab="introduction"):
     return render_template("api.jinja2", tab=tab)
+
 
 @api.route("/api/delete/<int:experiment_id>/", methods=["POST"])
 @login_required
@@ -19,5 +21,3 @@ def delete_experiment(experiment_id):
         db.session.commit()
 
     return redirect(url_for("index.page"))
-
-
