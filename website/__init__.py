@@ -8,20 +8,13 @@ from flask_login import LoginManager
 
 
 # Initialize app.
-app = Flask(__name__)
+app = Flask(__name__, instance_relative_config=True)
 # App configurations.
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    "postgresql://thor_server:thor@localhost:5432/thor"
-)
-app.config["SECRET_KEY"] = "50601550186443463175"
-app.config["MAIL_PREFIX"] = "[Thor] "
-app.config["MAIL_SERVER"] = "smtp.gmail.com"
-app.config["MAIL_PORT"] = 465
-app.config["MAIL_USE_SSL"] = True
-app.config["MAIL_USERNAME"] = "this.is.a.gmail.account@gmail.com"
-app.config["MAIL_PASSWORD"] = "this.is.a.password"
-
+# Load the default configuration
+app.config.from_object('website.config')
+# Override default configuration from instance/local_config.py
+app.config.from_pyfile('local_config.py')
 
 # Add-ons for the app.
 bootstrap = Bootstrap(app)
@@ -41,8 +34,9 @@ from .models import User
 for blueprint in blueprints:
     app.register_blueprint(blueprint)
 
-# This callback is used to reload the user object from the user ID stored in the
-# session.
+
+# This callback is used to reload the user object from the user ID stored in
+# the session.
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.filter_by(id=user_id).first()
