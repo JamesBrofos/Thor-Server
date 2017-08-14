@@ -12,6 +12,7 @@ from flask_migrate import upgrade
 from db import migrate
 import website
 
+# alembic is very chatty during migrations; not valuable here
 logging.disable(logging.CRITICAL)
 
 TEST_USERNAME = 'testuser'
