@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import random
 import tempfile
 import unittest
 
@@ -80,6 +81,15 @@ class WebsiteTestCase(unittest.TestCase):
                           content_type='application/json')
         return r
 
+    def submit_recommendation(self, rec_id, value):
+        apikey = self.apikey()
+        params = {'auth_token': apikey, 'recommendation_id': rec_id,
+                  'value': value}
+        r = self.app.post('/api/submit_recommendation/',
+                          data=json.dumps(params),
+                          content_type='application/json')
+        return r
+
     def test_index(self):
         r = self.app.get('/')
         self.assertEqual(r.status_code, 200)
@@ -122,6 +132,29 @@ class WebsiteTestCase(unittest.TestCase):
             # TODO: awkward
             x = bytes(str(json.loads(rec['config'])['x']), 'utf8')
             self.assertIn(x, r.data)
+
+    def test_pending_first_target(self):
+        # https://github.com/JamesBrofos/Thor-Server/issues/4
+        r = self.signup(TEST_USERNAME, TEST_PASSWORD, TEST_EMAIL)
+        r = self.create_experiment()
+        exp = json.loads(r.data)
+        r1 = self.create_recommendation(exp)
+        rec1 = json.loads(r1.data)
+        r2 = self.create_recommendation(exp)
+        rec2 = json.loads(r2.data)
+        # Check before submitting
+        r = self.app.get('/experiment/{}/'.format(exp['id']))
+        self.assertEqual(r.status_code, 200)
+        # Check after submitting obs #2; this caused errors
+        self.submit_recommendation(rec2['id'], random.random())
+        r = self.app.get('/experiment/{}/'.format(exp['id']))
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(b'Percent improvement', r.data)
+        # Verify it's all still good after submitting obs #1
+        self.submit_recommendation(rec1['id'], random.random())
+        r = self.app.get('/experiment/{}/'.format(exp['id']))
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(b'Percent improvement', r.data)
 
 
 if __name__ == '__main__':
