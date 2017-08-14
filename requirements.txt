@@ -1,6 +1,7 @@
 alabaster==0.7.10
 appdirs==1.4.3
 Babel==2.4.0
+beautifulsoup4
 bokeh==0.12.6
 Flask-API==0.7.1
 Flask-Bcrypt==0.7.1
@@ -14,6 +15,7 @@ gunicorn==19.7.1
 imagesize==0.7.1
 Keras==2.0.6
 livereload==2.5.1
+lxml
 matplotlib==2.0.2
 nose2==0.6.5
 packaging==16.8
