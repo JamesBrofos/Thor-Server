@@ -8,7 +8,7 @@
 <p>This example will walk through a basic test function called the Franke function. This two-dimensional problem will illustrate how Thor will attempt to find the maximum of a black-box function.</p>
 <br>
 <h4>Authenticate</h4>
-<p>As a registered user, your API key is: <code>{{ current_user.auth_token }}</code>. To authenticate with the Thor server in Python, execute:</p>
+<p>As a registered user, your API key is: <code id="auth_token">{{ current_user.auth_token }}</code>. To authenticate with the Thor server in Python, execute:</p>
 <pre><code class="language-python">from thor_client import ThorClient
 
 # Authentication token.

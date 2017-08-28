@@ -64,3 +64,12 @@ app.config["MAIL_USERNAME"] = "this.is.a.gmail.account@gmail.com"
 app.config["MAIL_PASSWORD"] = "this.is.a.password"
 ```
 Enter the gmail address and the password you want to use.
+
+
+## Testing
+
+`tests.py` contains a minimal set of basic tests of basic site functions. To
+invoke them:
+```shell
+make test
+```

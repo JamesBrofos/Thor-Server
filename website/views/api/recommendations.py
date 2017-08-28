@@ -32,14 +32,14 @@ def create_recommendation(user):
     space = create_space(dims)
 
     # Probability of selecting a random configuration.
-    if request.json["rand_prob"]:
+    if request.json.get("rand_prob", None):
         rand_prob = request.json["rand_prob"]
     else:
         rand_prob = 0.
     # Number of model estimation iterations to perform. Note that the meaning of
     # this parameter changes when switching from a Gaussian process to a
     # Bayesian neural network.
-    if request.json["n_model_iters"]:
+    if request.json.get("n_model_iters", None):
         n_model_iters = request.json["n_model_iters"]
     else:
         n_model_iters = 5 * n_dims
