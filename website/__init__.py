@@ -13,8 +13,8 @@ app = Flask(__name__, instance_relative_config=True)
 basedir = os.path.abspath(os.path.dirname(__file__))
 # Load the default configuration
 app.config.from_object('website.config')
-# Override default configuration from instance/local_config.py
-app.config.from_pyfile('local_config.py')
+# Check for a local configuration from instance/local_config.py
+app.config.from_pyfile('local_config.py', silent=True)
 
 # Add-ons for the app.
 bootstrap = Bootstrap(app)
