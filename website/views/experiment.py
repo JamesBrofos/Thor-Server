@@ -48,8 +48,8 @@ def delete_pending(experiment_id):
 @login_required
 def download_history(experiment_id):
     # Query for the corresponding experiment.
-    experiment = Experiment.query.filter_by(
-        id=experiment_id, user_id=current_user.id
+    experiment = Experiment.query.filter_by(id=experiment_id).filter(
+        (Experiment.user_id==current_user.id) | (Experiment.is_published==True)
     ).first_or_404()
     # Parse the observations into a pandas dataframe.
     dims = experiment.dimensions.all()
@@ -74,8 +74,8 @@ def download_history(experiment_id):
 @login_required
 def history_page(experiment_id):
     # Query for the corresponding experiment.
-    experiment = Experiment.query.filter_by(
-        id=experiment_id, user_id=current_user.id
+    experiment = Experiment.query.filter_by(id=experiment_id).filter(
+        (Experiment.user_id==current_user.id) | (Experiment.is_published==True)
     ).first_or_404()
 
     return render_template(
@@ -89,8 +89,8 @@ def history_page(experiment_id):
 @login_required
 def analysis_page(experiment_id):
     # Query for the corresponding experiment.
-    experiment = Experiment.query.filter_by(
-        id=experiment_id, user_id=current_user.id
+    experiment = Experiment.query.filter_by(id=experiment_id).filter(
+        (Experiment.user_id==current_user.id) | (Experiment.is_published==True)
     ).first()
     # Grab the inputs arguments from the URL.
     args = request.args
@@ -141,8 +141,8 @@ def analysis_page(experiment_id):
 @login_required
 def overview_page(experiment_id):
     # Query for the corresponding experiment.
-    experiment = Experiment.query.filter_by(
-        id=experiment_id, user_id=current_user.id
+    experiment = Experiment.query.filter_by(id=experiment_id).filter(
+        (Experiment.user_id==current_user.id) | (Experiment.is_published==True)
     ).first_or_404()
 
     dims = experiment.dimensions.all()
@@ -180,6 +180,21 @@ def overview_page(experiment_id):
             css_resources=css_resources,
         )
     )
+
+
+@experiment.route("/experiment/<int:experiment_id>/admin/")
+@login_required
+def admin_page(experiment_id):
+    # Query for the corresponding experiment.
+    experiment = Experiment.query.filter_by(
+        id=experiment_id, user_id=current_user.id
+    ).first_or_404()
+
+    return render_template(
+            "experiment.jinja2",
+            tab="admin",
+            experiment=experiment
+        )
 
 
 @experiment.errorhandler(404)

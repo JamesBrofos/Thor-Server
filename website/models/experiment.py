@@ -14,6 +14,8 @@ class Experiment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     name = db.Column(db.String(80))
     date = db.Column(db.DateTime)
+    is_published = db.Column(db.Boolean, server_default="FALSE", default=False,
+                             nullable=False)
     acq_func = db.relationship(
         "AcquisitionFunction",
         uselist=False,
@@ -36,6 +38,7 @@ class Experiment(db.Model):
     def __init__(self, name, date):
         self.name = name
         self.date = date
+        self.is_published = False
 
     def to_dict(self):
         dims = [d.to_dict() for d in self.dimensions.all()]
@@ -43,7 +46,8 @@ class Experiment(db.Model):
             "name": self.name,
             "date": self.date,
             "dimensions": dims,
-            "id": self.id
+            "id": self.id,
+            "is_published": self.is_published
         }
 
     @classmethod
@@ -72,7 +76,7 @@ class Experiment(db.Model):
     def maximal_observation(self):
         return self.observations.filter_by(
             pending=False
-        ).order_by("target desc").first()
+        ).order_by(Observation.target.desc()).first()
 
     @hybrid_property
     def area_over_curve(self):
@@ -83,6 +87,3 @@ class Experiment(db.Model):
             ).order_by("date").all()]
         )
         return np.mean(best - series)
-
-
-
