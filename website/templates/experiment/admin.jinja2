@@ -9,7 +9,7 @@
         Click the button to hide this experiment.
         </p>
       </div>
-      <div class="col-md-3 thor-exp-btn">
+      <div class="col-md-3">
         <form method="post"
             action="{{ url_for("api.unpublish_experiment", experiment_id=experiment.id) }}"
             >
@@ -38,7 +38,7 @@
         Click the button to publish this experiment.
         </p>
       </div>
-      <div class="col-md-5 thor-exp-btn">
+      <div class="col-md-5">
         <form method="post"
             action="{{ url_for("api.publish_experiment", experiment_id=experiment.id) }}"
             >
