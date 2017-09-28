@@ -25,6 +25,7 @@ def create_recommendation(user):
     # Extract parameters.
     experiment_id = request.json["experiment_id"]
     date = dt.datetime.today()
+    description = request.json.get("description", "")
     # Get the experiment corresponding to this observation.
     e = Experiment.query.filter_by(id=experiment_id).first()
     dims = e.dimensions.all()
@@ -73,7 +74,7 @@ def create_recommendation(user):
 
     # Submit recommendation to user and store in the Thor database. It is
     # created initially without a response and is marked as pending.
-    obs = Observation(str(rec), date)
+    obs = Observation(str(rec), date, description)
     e.observations.append(obs)
     # Commit changes.
     db.session.commit()

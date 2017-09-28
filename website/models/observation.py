@@ -13,10 +13,12 @@ class Observation(db.Model):
     target = db.Column(db.Float, default=None)
     pending = db.Column(db.Boolean, default=True)
     date = db.Column(db.DateTime)
+    description = db.Column(db.Text, default='')
 
-    def __init__(self, configuration, date):
+    def __init__(self, configuration, date, description=''):
         self.configuration = configuration
         self.date = date
+        self.description = description
 
     @hybrid_property
     def config(self):
@@ -28,5 +30,6 @@ class Observation(db.Model):
             "experiment_id": self.experiment_id,
             "config": self.configuration,
             "target": self.target,
-            "pending": self.pending
+            "pending": self.pending,
+            "description": self.description
         }
