@@ -13,6 +13,7 @@
       {% endfor %}
       <th>Target</th>
       <th>Created</th>
+      <th>Description</th>
     </tr>
   </thead>
   <tbody>
@@ -23,6 +24,7 @@
         {% endfor %}
         <td>{% if obs.target is not none %}{{ obs.target|round(5) }}{% endif %}</td>
         <td>{{ obs.date.strftime('%Y-%m-%d at %H:%M') }}</td>
+        <td>{{ obs.description or '' }}</td>
       </tr>
     {% endfor %}
   </tbody>

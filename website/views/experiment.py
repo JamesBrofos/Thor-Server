@@ -61,6 +61,7 @@ def download_history(experiment_id):
     D["obs_id"] = [o.id for o in obs]
     D["date"] = [pd.datetime.strftime(o.date, '%Y-%m-%d %H:%M:%S')
                  for o in obs]
+    D["description"] = [o.description or "" for o in obs]
     D.set_index('obs_id', inplace=True)
     # Make a comma-separated variables file.
     resp = make_response(D.to_csv())
