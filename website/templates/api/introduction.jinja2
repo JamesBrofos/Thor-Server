@@ -52,3 +52,19 @@ for i in range(30):
     val = franke(np.array([x["x"], x["y"]]))
     # Report the performance of the configuration back to Thor.
     rec.submit_recommendation(val)</code></pre>
+
+
+<p>
+For large experiments, it may be helpful to describe individual recommendations
+in Thor as a cross-reference to model files or for some other purpose.  To do this,
+add an optional <code>description</code> parameter to
+<code>create_recommendation()</code> calls with a string value.
+</p>
+
+<pre><code class="language-python"># Adding a description
+rec = exp.create_recommendation(description="run-123")</code></pre>
+
+<p>
+This description will be visible on the experiment history page and will be
+added as a column in downloaded experiment history CSV files.
+</p>
