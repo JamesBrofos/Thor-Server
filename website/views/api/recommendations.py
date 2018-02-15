@@ -1,11 +1,10 @@
 import datetime as dt
 import numpy as np
 import sobol_seq
-from time import sleep
 from flask import Blueprint, request, jsonify
 from flask_api import status
 from thor.optimization import BayesianOptimization
-from thor.models import GaussianProcess
+from sif.models import GaussianProcess
 from ...models import Experiment, Observation
 from ... import db
 from ...utils import (
@@ -27,8 +26,8 @@ def create_recommendation(user):
     date = dt.datetime.today()
     description = request.json.get("description", "")
     # Get the experiment corresponding to this observation.
-    e = Experiment.query.filter_by(id=experiment_id).first()
-    dims = e.dimensions.all()
+    exp = Experiment.query.filter_by(id=experiment_id).first()
+    dims = exp.dimensions.all()
     n_dims = len(dims)
     space = create_space(dims)
 
@@ -43,7 +42,7 @@ def create_recommendation(user):
     if request.json.get("n_model_iters", None):
         n_model_iters = request.json["n_model_iters"]
     else:
-        n_model_iters = 5 * n_dims
+        n_model_iters = 10
     # Number of randomly positioned observations to create.
     n_random = 1 * n_dims
 
@@ -52,33 +51,39 @@ def create_recommendation(user):
     # can be provided to determine the chance of selecting a configuration at
     # random. Setting this parameter to one is equivalent to assuming a policy
     # of pure exploration.
-    n_observed = e.observations.filter_by(pending=False).count()
-    n_obs = e.observations.count()
-    if n_observed < n_random or np.random.uniform() < rand_prob:
-        # rec = encode_recommendation(space.sample().ravel(), dims)
-        sobol_rec = sobol_seq.i4_sobol(n_dims, n_obs+1)[0]
-        rec = encode_recommendation(space.invert(sobol_rec).ravel(), dims)
-    else:
+    n_observed = exp.observations.filter_by(pending=False).count()
+    n_obs = exp.observations.count()
+    sobol_rec = space.invert(sobol_seq.i4_sobol(n_dims, n_obs+1)[0]).ravel()
+    rec = encode_recommendation(sobol_rec, dims)
+
+    # If the number of observations exceeds the number of initialization
+    # observations and we're not random sampling.
+    if n_observed >= n_random and np.random.uniform() > rand_prob:
         # Get pending and non-pending observations.
-        observed = e.observations.filter(Observation.pending==False).all()
-        pending = e.observations.filter(Observation.pending==True).all()
+        observed = exp.observations.filter(Observation.pending==False).all()
+        pending = exp.observations.filter(Observation.pending==True).all()
         X, y = decode_recommendation(observed, dims)
         X_pending = (
             decode_recommendation(pending, dims)[0]
             if len(pending) > 0 else None
         )
         # Create a recommendation with Bayesian optimization.
-        bo = BayesianOptimization(e, space)
-        c = bo.recommend(X, y, X_pending, GaussianProcess, n_model_iters)
-        rec = encode_recommendation(c, dims)
+        try:
+            bo = BayesianOptimization(exp, space)
+            c = bo.recommend(X, y, X_pending, GaussianProcess, n_model_iters)
+            rec = encode_recommendation(c, dims)
+        except Exception as err:
+            print(
+                "Bayesian optimization error: {}. "
+                "The recommendation is: {}.".format(err, rec)
+            )
 
     # Submit recommendation to user and store in the Thor database. It is
     # created initially without a response and is marked as pending.
     obs = Observation(str(rec), date, description)
-    e.observations.append(obs)
+    exp.observations.append(obs)
     # Commit changes.
     db.session.commit()
-    sleep(1)
 
     return jsonify(obs.to_dict())
 
