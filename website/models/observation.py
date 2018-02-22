@@ -18,7 +18,7 @@ class Observation(db.Model):
     def __init__(self, configuration, date, description=''):
         self.configuration = configuration
         self.date = date
-        self.description = description
+        self.description = description.strip()
 
     @hybrid_property
     def config(self):

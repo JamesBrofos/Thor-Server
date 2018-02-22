@@ -3,6 +3,7 @@ import numpy as np
 import sobol_seq
 from flask import Blueprint, request, jsonify
 from flask_api import status
+from scipy.spatial.distance import cdist
 from thor.optimization import BayesianOptimization
 from sif.models import GaussianProcess
 from ...models import Experiment, Observation
@@ -54,11 +55,13 @@ def create_recommendation(user):
     n_observed = exp.observations.filter_by(pending=False).count()
     n_obs = exp.observations.count()
     sobol_rec = space.invert(sobol_seq.i4_sobol(n_dims, n_obs+1)[0]).ravel()
-    rec = encode_recommendation(sobol_rec, dims)
 
     # If the number of observations exceeds the number of initialization
     # observations and we're not random sampling.
     if n_observed >= n_random and np.random.uniform() > rand_prob:
+        # Create a flag that is true when the Bayesian optimization algorithm
+        # fails due to numerical instability.
+        optimization_failed = False
         # Get pending and non-pending observations.
         observed = exp.observations.filter(Observation.pending==False).all()
         pending = exp.observations.filter(Observation.pending==True).all()
@@ -70,17 +73,38 @@ def create_recommendation(user):
         # Create a recommendation with Bayesian optimization.
         try:
             bo = BayesianOptimization(exp, space)
-            c = bo.recommend(X, y, X_pending, GaussianProcess, n_model_iters)
-            rec = encode_recommendation(c, dims)
+            bo_rec = bo.recommend(X, y, X_pending, GaussianProcess, n_model_iters)
         except Exception as err:
+            optimization_failed = True
+            print("Bayesian optimization error: {}.".format(err))
+
+        # There are several failure modes that we are considering here. First,
+        # there is a case where the chosen point is too close to any other point
+        # we've previously evaluated (up to machine precision). Second, there is
+        # an unusual case where the recommendation from the Bayesian
+        # optimization procedure contains NaNs. Additionally, if the Bayesian
+        # optimization algorithm failed due to numerical instability, this is
+        # the third failure mode.
+        if (
+                # np.any(cdist(np.atleast_2d(bo_rec), X) < 1e-15) or
+                np.any(np.isnan(bo_rec)) or
+                optimization_failed
+        ):# and False:
             print(
-                "Bayesian optimization error: {}. "
-                "The recommendation is: {}.".format(err, rec)
+                "Optimization failed with recommendation: {}. Using Sobol "
+                "recommendation.".format(sobol_rec)
             )
+            rec = sobol_rec
+            description += " Sobol"
+        else:
+            rec = bo_rec
+    else:
+        rec = sobol_rec
+        description += " Sobol"
 
     # Submit recommendation to user and store in the Thor database. It is
     # created initially without a response and is marked as pending.
-    obs = Observation(str(rec), date, description)
+    obs = Observation(str(encode_recommendation(rec, dims)), date, description)
     exp.observations.append(obs)
     # Commit changes.
     db.session.commit()
