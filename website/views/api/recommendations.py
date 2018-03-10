@@ -40,10 +40,10 @@ def create_recommendation(user):
     # Number of model estimation iterations to perform. Note that the meaning of
     # this parameter changes when switching from a Gaussian process to a
     # Bayesian neural network.
-    if request.json.get("n_model_iters", None):
-        n_model_iters = request.json["n_model_iters"]
+    if request.json.get("n_models", None):
+        n_models = request.json["n_models"]
     else:
-        n_model_iters = 10
+        n_models = 5
     # Number of randomly positioned observations to create.
     n_random = 1 * n_dims
 
@@ -54,7 +54,7 @@ def create_recommendation(user):
     # of pure exploration.
     n_observed = exp.observations.filter_by(pending=False).count()
     n_obs = exp.observations.count()
-    sobol_rec = space.invert(sobol_seq.i4_sobol(n_dims, n_obs+1)[0]).ravel()
+    sobol_rec = sobol_seq.i4_sobol(n_dims, n_obs+1)[0].ravel()
 
     # If the number of observations exceeds the number of initialization
     # observations and we're not random sampling.
@@ -73,7 +73,7 @@ def create_recommendation(user):
         # Create a recommendation with Bayesian optimization.
         try:
             bo = BayesianOptimization(exp, space)
-            bo_rec = bo.recommend(X, y, X_pending, GaussianProcess, n_model_iters)
+            bo_rec = bo.recommend(X, y, X_pending, GaussianProcess, n_models)
         except Exception as err:
             optimization_failed = True
             print("Bayesian optimization error: {}.".format(err))
@@ -86,13 +86,13 @@ def create_recommendation(user):
         # optimization algorithm failed due to numerical instability, this is
         # the third failure mode.
         if (
-                # np.any(cdist(np.atleast_2d(bo_rec), X) < 1e-15) or
-                np.any(np.isnan(bo_rec)) or
+                (cdist(np.atleast_2d(bo_rec), X) < 1e-10).any() or
+                np.isnan(bo_rec).any() or
                 optimization_failed
-        ):# and False:
+        ):
             print(
                 "Optimization failed with recommendation: {}. Using Sobol "
-                "recommendation.".format(sobol_rec)
+                "recommendation: {}".format(bo_rec, sobol_rec)
             )
             rec = sobol_rec
             description += " Sobol"
@@ -102,9 +102,15 @@ def create_recommendation(user):
         rec = sobol_rec
         description += " Sobol"
 
+    # Make sure that the recommendation really is in the correct interval. This
+    # is by assumption the unit hypercube. Sometimes we may encounter slightly
+    # negative values, which will be clipped to zero by this method.
+    rec = np.clip(rec, 0., 1.)
     # Submit recommendation to user and store in the Thor database. It is
     # created initially without a response and is marked as pending.
-    obs = Observation(str(encode_recommendation(rec, dims)), date, description)
+    obs = Observation(
+        str(encode_recommendation(space.invert(rec), dims)), date, description
+    )
     exp.observations.append(obs)
     # Commit changes.
     db.session.commit()
