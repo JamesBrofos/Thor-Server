@@ -1,7 +1,6 @@
 {% extends "base.jinja2" %}
 
 
-
 {% block styles %}
 {{ super() }}
 <link rel="stylesheet" href="{{ url_for("static", filename="css/prism.css") }}">
@@ -12,19 +11,15 @@
 {% endblock %}
 
 {% block main_content %}
-
 <ul class="nav nav-tabs">
   <li {% if tab == "introduction" %}class="active disabled"{% endif %}><a href="{{ url_for("api.page", tab="introduction") }}">Introduction</a></li>
   <li {% if tab == "clients" %}class="active disabled"{% endif %}><a href="{{ url_for("api.page", tab="clients") }}">Client APIs</a></li>
-  <li {% if tab == "parallel" %}class="active disabled"{% endif %}><a href="{{ url_for("api.page", tab="parallel") }}">Parallel Optimization</a></li>
 </ul>
 
 {% if tab == "introduction" %}
   {% include "api/introduction.jinja2" %}
 {% elif tab == "clients" %}
   {% include "api/clients.jinja2" %}
-{% elif tab == "parallel" %}
-  {% include "api/parallel.jinja2" %}
 {% endif %}
 {% endblock %}
 
