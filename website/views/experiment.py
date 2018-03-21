@@ -12,7 +12,8 @@ from flask_login import login_required, current_user
 from flask_api import status
 # Bokeh imports.
 from bokeh.embed import components
-from bokeh.plotting import figure
+from bokeh.plotting import figure, ColumnDataSource
+from bokeh.models import HoverTool
 from bokeh.resources import INLINE
 from bokeh.util.string import encode_utf8
 # Thor Server imports.
@@ -112,7 +113,7 @@ def analysis_page(experiment_id):
                 title="Metric vs. Variable Scatter",
                 tools="pan,box_zoom,reset",
                 plot_height=225,
-                responsive=True,
+                sizing_mode='scale_width',
                 x_axis_label="Variable",
                 x_axis_type="log" if d.dim_type == "logarithmic" else "linear"
             )
@@ -151,20 +152,34 @@ def overview_page(experiment_id):
         obs = experiment.observations.filter_by(
             pending=False
         ).order_by("date").all()
-        # Extract best observation so far.
+        # Decode the observations into a design matrix and a vector of targets.
         X, y = decode_recommendation(obs, dims)
-        # Visualize.
         cummax = np.maximum.accumulate(y)
         r = np.arange(1, cummax.shape[0] + 1, step=1)
+        # Construct tooltips on hover.
+        D = {d.name: X[:, i] for i, d in enumerate(dims)}
+        D["objective"] = y
+        D["r"] = r
+        source = ColumnDataSource(data=D)
+        hover = HoverTool(
+            tooltips=[("Objective", "@objective")] + [(d.name, "@{}".format(d.name)) for d in dims],
+            names=["evals"]
+        )
+
+        # Visualize the performance of the algorithm so far. This involves
+        # showing a cumulative best line alongside dots indicating the
+        # evaluation of the objective at each iteration. The plot is
+        # accompanied by tools for banning, zooming, tooltips on hover, and
+        # reseting the figure.
         fig = figure(
             title="Metric Improvement",
-            tools="pan,box_zoom,reset",
+            tools=["pan", "box_zoom", "reset", hover],
             plot_height=225,
-            responsive=True,
+            sizing_mode='scale_width',
             x_axis_label="Number of Observations",
         )
         fig.line(r, cummax, line_width=2)
-        fig.circle(r, y)
+        fig.circle("r", "objective", source=source, name="evals")
         fig.toolbar.logo = None
         script, div = components(fig)
     else:

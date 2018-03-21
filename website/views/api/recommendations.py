@@ -1,6 +1,8 @@
 import datetime as dt
 import numpy as np
 import sobol_seq
+import traceback
+import logging
 from flask import Blueprint, request, jsonify
 from flask_api import status
 from scipy.spatial.distance import cdist
@@ -76,7 +78,7 @@ def create_recommendation(user):
             bo_rec = bo.recommend(X, y, X_pending, GaussianProcess, n_models)
         except Exception as err:
             optimization_failed = True
-            print("Bayesian optimization error: {}.".format(err))
+            logging.error(traceback.format_exc())
 
         # There are several failure modes that we are considering here. First,
         # there is a case where the chosen point is too close to any other point
@@ -85,15 +87,12 @@ def create_recommendation(user):
         # optimization procedure contains NaNs. Additionally, if the Bayesian
         # optimization algorithm failed due to numerical instability, this is
         # the third failure mode.
-        if (
-                (cdist(np.atleast_2d(bo_rec), X) < 1e-10).any() or
-                np.isnan(bo_rec).any() or
-                optimization_failed
-        ):
-            print(
-                "Optimization failed with recommendation: {}. Using Sobol "
-                "recommendation: {}".format(bo_rec, sobol_rec)
-            )
+        if optimization_failed:
+            print("Optimization failed. Using Sobol recommendation: {}.".format(sobol_rec))
+            rec = sobol_rec
+            description += " Sobol"
+        elif (cdist(np.atleast_2d(bo_rec), X) < 1e-10).any() or np.isnan(bo_rec).any():
+            print("Invalid recommendation recommendation: {}. Using Sobol recommendation: {}.".format(bo_rec, sobol_rec))
             rec = sobol_rec
             description += " Sobol"
         else:
