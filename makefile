@@ -8,8 +8,5 @@ lan:
 	echo $(ip_addr)
 	gunicorn -t $(timeout) -w 4 -b $(ip_addr):5000 app:app
 
-test:
-	nose2 --verbose
-
 dev:
 	FLASK_APP=app.py FLASK_DEBUG=1 flask run

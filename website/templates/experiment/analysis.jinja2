@@ -6,7 +6,6 @@
     {% endif %}
     <p><b>Number of observations:</b> {{ experiment.observations.filter_by(pending=False).count() }}</p>
     <p><b>Pending observations:</b> {{ experiment.observations.filter_by(pending=True).count() }}</p>
-      <p><b>Acquisition Function</b> {{ experiment.acq_func.name.replace("_", " ").title() }}</p>
   </div>
   {% if experiment.observations.filter_by(pending=True).count() > 0 %}
     <div class="col-md-1 thor-del-pend-btn">

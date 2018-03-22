@@ -27,25 +27,22 @@ def create_recommendation(user):
     # Extract parameters.
     experiment_id = request.json["experiment_id"]
     date = dt.datetime.today()
-    description = request.json.get("description", "")
     # Get the experiment corresponding to this observation.
     exp = Experiment.query.filter_by(id=experiment_id).first()
     dims = exp.dimensions.all()
     n_dims = len(dims)
     space = create_space(dims)
 
+    # Which acquisition function would you like to use?
+    acquisition = request.json.get("acq_func", "expected_improvement")
+    # Description of this observation or experiment.
+    description = request.json.get("description", "")
     # Probability of selecting a random configuration.
-    if request.json.get("rand_prob", None):
-        rand_prob = request.json["rand_prob"]
-    else:
-        rand_prob = 0.
+    rand_prob = request.json.get("rand_prob", 0.)
     # Number of model estimation iterations to perform. Note that the meaning of
     # this parameter changes when switching from a Gaussian process to a
     # Bayesian neural network.
-    if request.json.get("n_models", None):
-        n_models = request.json["n_models"]
-    else:
-        n_models = 5
+    n_models = request.json.get("n_models", 5)
     # Number of randomly positioned observations to create.
     n_random = 1 * n_dims
 
@@ -56,7 +53,7 @@ def create_recommendation(user):
     # of pure exploration.
     n_observed = exp.observations.filter_by(pending=False).count()
     n_obs = exp.observations.count()
-    sobol_rec = sobol_seq.i4_sobol(n_dims, n_obs+1)[0].ravel()
+    rec = sobol_seq.i4_sobol(n_dims, n_obs+1)[0].ravel()
 
     # If the number of observations exceeds the number of initialization
     # observations and we're not random sampling.
@@ -75,7 +72,9 @@ def create_recommendation(user):
         # Create a recommendation with Bayesian optimization.
         try:
             bo = BayesianOptimization(exp, space)
-            bo_rec = bo.recommend(X, y, X_pending, GaussianProcess, n_models)
+            bo_rec = bo.recommend(
+                X, y, X_pending, GaussianProcess, n_models, acquisition
+            )
         except Exception as err:
             optimization_failed = True
             logging.error(traceback.format_exc())
@@ -88,17 +87,14 @@ def create_recommendation(user):
         # optimization algorithm failed due to numerical instability, this is
         # the third failure mode.
         if optimization_failed:
-            print("Optimization failed. Using Sobol recommendation: {}.".format(sobol_rec))
-            rec = sobol_rec
+            print("Optimization failed. Using Sobol recommendation: {}.".format(rec))
             description += " Sobol"
         elif (cdist(np.atleast_2d(bo_rec), X) < 1e-10).any() or np.isnan(bo_rec).any():
-            print("Invalid recommendation recommendation: {}. Using Sobol recommendation: {}.".format(bo_rec, sobol_rec))
-            rec = sobol_rec
+            print("Invalid recommendation recommendation: {}. Using Sobol recommendation: {}.".format(bo_rec, rec))
             description += " Sobol"
         else:
             rec = bo_rec
     else:
-        rec = sobol_rec
         description += " Sobol"
 
     # Make sure that the recommendation really is in the correct interval. This

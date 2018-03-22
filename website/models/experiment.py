@@ -16,12 +16,6 @@ class Experiment(db.Model):
     date = db.Column(db.DateTime)
     is_published = db.Column(db.Boolean, server_default="FALSE", default=False,
                              nullable=False)
-    acq_func = db.relationship(
-        "AcquisitionFunction",
-        uselist=False,
-        backref="experiments",
-        cascade="all, delete-orphan"
-    )
     dimensions = db.relationship(
         "Dimension",
         lazy="dynamic",
