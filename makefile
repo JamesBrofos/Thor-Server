@@ -10,3 +10,6 @@ lan:
 
 dev:
 	FLASK_APP=app.py FLASK_DEBUG=1 flask run
+
+kill:
+	kill -9 `ps aux |grep gunicorn | awk '{ print $2 }'`

@@ -53,7 +53,7 @@ def create_recommendation(user):
     # of pure exploration.
     n_observed = exp.observations.filter_by(pending=False).count()
     n_obs = exp.observations.count()
-    rec = sobol_seq.i4_sobol(n_dims, n_obs+1)[0].ravel()
+    rec = space.invert(sobol_seq.i4_sobol(n_dims, n_obs+1)[0].ravel())
 
     # If the number of observations exceeds the number of initialization
     # observations and we're not random sampling.
@@ -73,8 +73,18 @@ def create_recommendation(user):
         try:
             bo = BayesianOptimization(exp, space)
             bo_rec = bo.recommend(
-                X, y, X_pending, GaussianProcess, n_models, acquisition
+                X,
+                y,
+                X_pending,
+                GaussianProcess,
+                n_models,
+                acquisition
             )
+            # Make sure that the recommendation really is in the correct
+            # interval. This is by assumption the unit hypercube. Sometimes we
+            # may encounter slightly negative values, which will be clipped to
+            # zero by this method.
+            bo_rec_inv = space.invert(np.clip(bo_rec, 0., 1.))
         except Exception as err:
             optimization_failed = True
             logging.error(traceback.format_exc())
@@ -86,26 +96,27 @@ def create_recommendation(user):
         # optimization procedure contains NaNs. Additionally, if the Bayesian
         # optimization algorithm failed due to numerical instability, this is
         # the third failure mode.
+        X_orig = np.vstack([space.invert(x) for x in X])
         if optimization_failed:
             print("Optimization failed. Using Sobol recommendation: {}.".format(rec))
             description += " Sobol"
-        elif (cdist(np.atleast_2d(bo_rec), X) < 1e-10).any() or np.isnan(bo_rec).any():
-            print("Invalid recommendation recommendation: {}. Using Sobol recommendation: {}.".format(bo_rec, rec))
+        elif (
+                (cdist(np.atleast_2d(bo_rec_inv), X_orig) < 1e-10).any() or
+                np.isnan(bo_rec_inv).any()
+        ):
+            print(
+                "Invalid recommendation recommendation: {}. "
+                "Using Sobol recommendation: {}.".format(bo_rec_inv, rec)
+            )
             description += " Sobol"
         else:
-            rec = bo_rec
+            rec = bo_rec_inv
     else:
         description += " Sobol"
 
-    # Make sure that the recommendation really is in the correct interval. This
-    # is by assumption the unit hypercube. Sometimes we may encounter slightly
-    # negative values, which will be clipped to zero by this method.
-    rec = np.clip(rec, 0., 1.)
     # Submit recommendation to user and store in the Thor database. It is
     # created initially without a response and is marked as pending.
-    obs = Observation(
-        str(encode_recommendation(space.invert(rec), dims)), date, description
-    )
+    obs = Observation(str(encode_recommendation(rec, dims)), date, description)
     exp.observations.append(obs)
     # Commit changes.
     db.session.commit()

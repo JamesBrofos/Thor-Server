@@ -62,11 +62,12 @@ class Experiment(db.Model):
 
     @hybrid_property
     def percent_improvement(self):
-        first = self.observations.filter_by(
-            pending=False
-        ).order_by("date").first()
+        first = self.observations.filter_by(pending=False).order_by("date").first()
         best = self.maximal_observation
-        return np.abs((best.target - first.target) / first.target) * 100.
+        if first.target != 0.:
+            return np.abs((best.target - first.target) / first.target) * 100.
+        else:
+            return np.inf
 
     @hybrid_property
     def maximal_observation(self):
