@@ -80,11 +80,7 @@ def create_recommendation(user):
                 n_models,
                 acquisition
             )
-            # Make sure that the recommendation really is in the correct
-            # interval. This is by assumption the unit hypercube. Sometimes we
-            # may encounter slightly negative values, which will be clipped to
-            # zero by this method.
-            bo_rec_inv = space.invert(np.clip(bo_rec, 0., 1.))
+            bo_rec_inv = space.invert(bo_rec)
         except Exception as err:
             optimization_failed = True
             logging.error(traceback.format_exc())

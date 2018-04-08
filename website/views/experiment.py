@@ -107,17 +107,26 @@ def analysis_page(experiment_id):
             ).order_by("date").all()
             # Extract best observation so far.
             X, y = decode_recommendation(obs, dims)
-            d = dims[selected_dim]
+            sd = dims[selected_dim]
+            # Construct tooltips on hover.
+            D = {d.name.replace(" ", "_"): X[:, i] for i, d in enumerate(dims)}
+            D["objective"] = y
+            source = ColumnDataSource(data=D)
+            hover = HoverTool(
+                tooltips=[("Objective", "@objective")] +
+                [(d.name, "@{}".format(d.name.replace(" ", "_"))) for d in dims],
+                names=["evals"]
+            )
             # Visualize.
             fig = figure(
                 title="Metric vs. Variable Scatter",
-                tools="pan,box_zoom,reset",
+                tools=["pan", "box_zoom", "reset", hover],
                 plot_height=225,
                 sizing_mode='scale_width',
                 x_axis_label="Variable",
-                x_axis_type="log" if d.dim_type == "logarithmic" else "linear"
+                x_axis_type="log" if sd.dim_type == "logarithmic" else "linear"
             )
-            fig.circle(X[:, selected_dim], y)
+            fig.circle(sd.name.replace(" ", "_"), "objective", source=source, name="evals")
             fig.toolbar.logo = None
             script, div = components(fig)
         else:
@@ -157,12 +166,12 @@ def overview_page(experiment_id):
         cummax = np.maximum.accumulate(y)
         r = np.arange(1, cummax.shape[0] + 1, step=1)
         # Construct tooltips on hover.
-        D = {d.name: X[:, i] for i, d in enumerate(dims)}
+        D = {d.name.replace(" ", "_"): X[:, i] for i, d in enumerate(dims)}
         D["objective"] = y
         D["r"] = r
         source = ColumnDataSource(data=D)
         hover = HoverTool(
-            tooltips=[("Objective", "@objective")] + [(d.name, "@{}".format(d.name)) for d in dims],
+            tooltips=[("Objective", "@objective")] + [(d.name, "@{}".format(d.name.replace(" ", "_"))) for d in dims],
             names=["evals"]
         )
 
