@@ -26,7 +26,6 @@ recommendations = Blueprint("recommendations", __name__)
 def create_recommendation(user):
     # Extract parameters.
     experiment_id = request.json["experiment_id"]
-    date = dt.datetime.today()
     # Get the experiment corresponding to this observation.
     exp = Experiment.query.filter_by(id=experiment_id).first()
     dims = exp.dimensions.all()
@@ -34,7 +33,7 @@ def create_recommendation(user):
     space = create_space(dims)
 
     # Which acquisition function would you like to use?
-    acquisition = request.json.get("acq_func", "expected_improvement")
+    acq_func = request.json.get("acq_func", "expected_improvement")
     # Description of this observation or experiment.
     description = request.json.get("description", "")
     # Probability of selecting a random configuration.
@@ -46,6 +45,11 @@ def create_recommendation(user):
     # Number of randomly positioned observations to create.
     n_random = 1 * n_dims
 
+    # We'll include an indicator for whether or not to return a recommendation
+    # for each computed model or to return a single recommendation for an
+    # integrated acquisition function.
+    integrate_acq = request.json.get("integrate_acq", True)
+
     # Either use Bayesian optimization or generate a random point depending on
     # the number of observations collected so far. Note that an input parameter
     # can be provided to determine the chance of selecting a configuration at
@@ -53,7 +57,13 @@ def create_recommendation(user):
     # of pure exploration.
     n_observed = exp.observations.filter_by(pending=False).count()
     n_obs = exp.observations.count()
-    rec = space.invert(sobol_seq.i4_sobol(n_dims, n_obs+1)[0].ravel())
+    if integrate_acq:
+        rec = space.invert(sobol_seq.i4_sobol(n_dims, n_obs+1)[0].ravel())
+    else:
+        rec = space.invert(np.array([
+            sobol_seq.i4_sobol(n_dims, n_obs+1+i)[0].ravel()
+            for i in range(n_models)
+        ]))
 
     # If the number of observations exceeds the number of initialization
     # observations and we're not random sampling.
@@ -71,14 +81,14 @@ def create_recommendation(user):
         )
         # Create a recommendation with Bayesian optimization.
         try:
-            bo = BayesianOptimization(exp, space)
-            bo_rec = bo.recommend(
+            bo_rec = BayesianOptimization(exp, space).recommend(
                 X,
                 y,
                 X_pending,
                 GaussianProcess,
                 n_models,
-                acquisition
+                acq_func,
+                integrate_acq
             )
             bo_rec_inv = space.invert(bo_rec)
         except Exception as err:
@@ -92,7 +102,7 @@ def create_recommendation(user):
         # optimization procedure contains NaNs. Additionally, if the Bayesian
         # optimization algorithm failed due to numerical instability, this is
         # the third failure mode.
-        X_orig = np.vstack([space.invert(x) for x in X])
+        X_orig = space.invert(X)
         if optimization_failed:
             print("Optimization failed. Using Sobol recommendation: {}.".format(rec))
             description += " Sobol"
@@ -112,12 +122,19 @@ def create_recommendation(user):
 
     # Submit recommendation to user and store in the Thor database. It is
     # created initially without a response and is marked as pending.
-    obs = Observation(str(encode_recommendation(rec, dims)), date, description)
-    exp.observations.append(obs)
+    O = []
+    for r in np.atleast_2d(rec):
+        obs = Observation(
+            str(encode_recommendation(r, dims)),
+            dt.datetime.today(),
+            description
+        )
+        exp.observations.append(obs)
+        O.append(obs)
     # Commit changes.
     db.session.commit()
 
-    return jsonify(obs.to_dict())
+    return jsonify([o.to_dict() for o in O])
 
 @recommendations.route("/api/submit_recommendation/", methods=["POST"])
 @require_apikey
