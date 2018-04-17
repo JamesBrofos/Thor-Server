@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import request, abort
 from ..models import User
-from .. import db
+
 
 # The actual decorator function.
 def require_apikey(view_function):

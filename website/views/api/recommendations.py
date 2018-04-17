@@ -38,9 +38,7 @@ def create_recommendation(user):
     description = request.json.get("description", "")
     # Probability of selecting a random configuration.
     rand_prob = request.json.get("rand_prob", 0.)
-    # Number of model estimation iterations to perform. Note that the meaning of
-    # this parameter changes when switching from a Gaussian process to a
-    # Bayesian neural network.
+    # Number of model samples to draw from the Bayesian posterior.
     n_models = request.json.get("n_models", 5)
     # Number of randomly positioned observations to create.
     n_random = 1 * n_dims
@@ -60,10 +58,7 @@ def create_recommendation(user):
     if integrate_acq:
         rec = space.invert(sobol_seq.i4_sobol(n_dims, n_obs+1)[0].ravel())
     else:
-        rec = space.invert(np.array([
-            sobol_seq.i4_sobol(n_dims, n_obs+1+i)[0].ravel()
-            for i in range(n_models)
-        ]))
+        rec = space.invert([sobol_seq.i4_sobol(n_dims, n_obs+1+i)[0] for i in range(n_models)])
 
     # If the number of observations exceeds the number of initialization
     # observations and we're not random sampling.
