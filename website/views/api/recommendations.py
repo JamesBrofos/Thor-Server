@@ -97,18 +97,14 @@ def create_recommendation(user):
         # optimization procedure contains NaNs. Additionally, if the Bayesian
         # optimization algorithm failed due to numerical instability, this is
         # the third failure mode.
-        X_orig = space.invert(X)
         if optimization_failed:
             print("Optimization failed. Using Sobol recommendation: {}.".format(rec))
             description += " Sobol"
         elif (
-                (cdist(np.atleast_2d(bo_rec_inv), X_orig) < 1e-10).any() or
+                (cdist(np.atleast_2d(bo_rec_inv), X) < 1e-10).any() or
                 np.isnan(bo_rec_inv).any()
         ):
-            print(
-                "Invalid recommendation recommendation: {}. "
-                "Using Sobol recommendation: {}.".format(bo_rec_inv, rec)
-            )
+            print("Invalid recommendation: {}. Using Sobol recommendation: {}.".format(bo_rec_inv, rec))
             description += " Sobol"
         else:
             rec = bo_rec_inv
