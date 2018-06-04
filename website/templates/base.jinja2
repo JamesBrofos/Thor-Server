@@ -57,11 +57,14 @@
     <div class="row">
       <div class="col-md-2 col-md-offset-1">
         {% block sidebar %}
-	      <center>
+	        <center>
+            <br/>
+          <a href="https://statistics.yale.edu/"><img src="{{ url_for("static", filename="yale.png") }}" class="img-responsive" alt="Yale University"></a>
+          <br/>
           <a href="https://www.mitre.org"><img src="{{ url_for("static", filename="mitre.png") }}" class="img-responsive" alt="The MITRE Corporation"></a>
           <br/>
 	        <p class="text-muted">
-      	    A server for model selection and parameter optimization where you can review your past and ongoing experiments.
+      	    Thor is a service for model selection and parameter optimization where you can review your past and ongoing experiments.
 	        </p>
 	      </center>
         {% endblock %}
